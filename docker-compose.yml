@@ -1,0 +1,50 @@
+services:
+  clipper-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["cpu"]
+    container_name: clipper-tools-cpu
+    restart: unless-stopped
+    ports:
+      - "${CLIPPER_PORT:-8000}:8000"
+    environment:
+      - CLIPPER_DEVICE=cpu
+      - CLIPPER_VIDEO_ENCODER=libx264
+      - CLIPPER_AUTO_CLEANUP_RAW=${CLIPPER_AUTO_CLEANUP_RAW:-false}
+      - CLIPPER_MAX_UPLOAD_MB=${CLIPPER_MAX_UPLOAD_MB:-2048}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ./storage:/app/storage
+      - whisper-cache:/root/.cache/huggingface
+
+  clipper-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["gpu"]
+    container_name: clipper-tools-gpu
+    restart: unless-stopped
+    ports:
+      - "${CLIPPER_PORT:-8000}:8000"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - CLIPPER_DEVICE=auto
+      - CLIPPER_VIDEO_ENCODER=auto
+      - CLIPPER_AUTO_CLEANUP_RAW=${CLIPPER_AUTO_CLEANUP_RAW:-false}
+      - CLIPPER_MAX_UPLOAD_MB=${CLIPPER_MAX_UPLOAD_MB:-2048}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ./storage:/app/storage
+      - whisper-cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, video, utility]
+
+volumes:
+  whisper-cache:

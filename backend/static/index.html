@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clipper Tools — Auto-Clipper Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">9:16</div>
+        <div>
+          <h1>Clipper Tools <span class="version-pill">v1.1</span></h1>
+          <p id="hw-badge">Mendeteksi hardware...</p>
+        </div>
+      </div>
+
+      <section class="panel-card member-card">
+        <div class="field" style="margin-bottom: 0;">
+          <label for="member-name-input">Anggota Tim Aktif</label>
+          <input type="text" id="member-name-input" placeholder="Nama kamu (mis. Angger)" maxlength="40" />
+        </div>
+      </section>
+
+      <section id="device-status-card" class="panel-card">
+        <div class="section-head">
+          <h2>Status Perangkat &amp; Engine</h2>
+        </div>
+        <div id="hw-mode-badge" class="hw-mode-banner">Mendeteksi perangkat...</div>
+        <div class="hw-status-grid">
+          <div class="hw-row"><span>GPU</span><strong id="hw-gpu">-</strong></div>
+          <div class="hw-row"><span>CPU &amp; RAM</span><strong id="hw-cpu-ram">-</strong></div>
+          <div class="hw-row"><span>Whisper STT</span><strong id="hw-whisper">-</strong></div>
+          <div class="hw-row"><span>Video Encoder</span><strong id="hw-encoder">-</strong></div>
+          <div class="hw-row"><span>Deteksi Momen</span><strong id="hw-detector">-</strong></div>
+        </div>
+      </section>
+
+      <section class="panel-card">
+        <h2>+ Job Baru</h2>
+        <div class="mode-tabs">
+          <button type="button" id="tab-url" class="tab-btn active">Link URL</button>
+          <button type="button" id="tab-upload" class="tab-btn">Upload File</button>
+        </div>
+
+        <form id="new-job-form">
+          <div id="url-input-group" class="field">
+            <label for="job-url">URL Video (YouTube / Twitch / Kick)</label>
+            <input type="url" id="job-url" placeholder="https://youtu.be/..." />
+          </div>
+
+          <div id="upload-input-group" class="field hidden">
+            <label for="job-file">File Video Lokal (.mp4, .mkv, .mov)</label>
+            <input type="file" id="job-file" accept=".mp4,.mkv,.mov,.webm" />
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="job-language">Bahasa</label>
+              <select id="job-language">
+                <option value="auto" selected>Auto (ID/EN)</option>
+                <option value="id">Indonesia</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="job-model">Whisper Model</label>
+              <select id="job-model">
+                <option value="small" selected>small (Cepat)</option>
+                <option value="medium">medium (Akurat)</option>
+                <option value="base">base</option>
+                <option value="tiny">tiny</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div class="field">
+              <label for="job-layout">Layout Default</label>
+              <select id="job-layout">
+                <option value="fullscreen" selected>Fullscreen 9:16</option>
+                <option value="splitscreen">Split-Screen</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="job-duration">Durasi (detik)</label>
+              <input type="number" id="job-duration" min="10" max="120" value="35" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="job-num-clips">Jumlah Kandidat Klip</label>
+            <input type="number" id="job-num-clips" min="1" max="15" value="3" />
+          </div>
+
+          <button type="submit" id="submit-job-btn" class="btn btn-primary full-width">
+            Mulai Proses Klip
+          </button>
+        </form>
+      </section>
+
+      <section class="panel-card">
+        <div class="section-head">
+          <h2>Storage Monitor</h2>
+        </div>
+        <div class="storage-stats">
+          <div class="storage-row"><span>Raw Video</span><strong id="stat-raw-mb">0 MB</strong></div>
+          <div class="storage-row"><span>Hasil Klip</span><strong id="stat-clips-mb">0 MB</strong></div>
+          <div class="storage-row"><span>Sisa SSD</span><strong id="stat-free-gb">0 GB</strong></div>
+        </div>
+        <button type="button" id="cleanup-storage-btn" class="btn btn-secondary btn-small full-width">
+          Bersihkan Raw Job Selesai
+        </button>
+      </section>
+
+      <section id="monitoring-card" class="panel-card">
+        <div class="section-head">
+          <h2>Monitoring &amp; Maintenance</h2>
+        </div>
+        <div class="hw-status-grid">
+          <div class="hw-row"><span>Klip Render / Upload</span><strong id="metric-clips-summary">0 / 0</strong></div>
+          <div class="hw-row"><span>Distribusi Platform</span><strong id="metric-platforms">TT: 0 • IG: 0 • YT: 0 • FB: 0</strong></div>
+          <div class="hw-row"><span>Kontribusi Tim</span><strong id="metric-members">-</strong></div>
+          <div class="hw-row"><span>Versi yt-dlp</span><strong id="metric-ytdlp">-</strong></div>
+        </div>
+        <div class="maint-actions">
+          <button type="button" id="update-ytdlp-btn" class="btn btn-secondary btn-small">Update yt-dlp</button>
+          <a id="backup-db-btn" href="/api/maintenance/backup-db" class="btn btn-secondary btn-small">Backup DB</a>
+        </div>
+      </section>
+
+      <section class="panel-card jobs-section">
+        <div class="section-head">
+          <h2>Daftar Job</h2>
+          <div class="jobs-filter-wrap">
+            <select id="filter-owner" title="Filter anggota tim">
+              <option value="ALL">Semua Tim</option>
+            </select>
+            <button type="button" id="refresh-jobs-btn" class="btn-icon" title="Refresh">↻</button>
+          </div>
+        </div>
+        <div id="jobs-list" class="jobs-list">
+          <div class="empty-muted">Memuat daftar job...</div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="main-content">
+      <div id="empty-state" class="empty-state">
+        <h2>Pilih atau Buat Job Klip Baru</h2>
+        <p>Masukkan link YouTube/Twitch/Kick atau upload video lokal di panel kiri untuk memulai.</p>
+      </div>
+
+      <div id="job-detail" class="hidden">
+        <header class="job-header panel-card">
+          <div class="job-header-top">
+            <div>
+              <div class="job-meta-row">
+                <span id="detail-status-badge" class="badge">ready</span>
+                <span id="detail-owner-tag" class="meta-pill">👤 Tim</span>
+                <span id="detail-source-tag" class="meta-pill">URL</span>
+                <span id="detail-lang-tag" class="meta-pill">ID</span>
+              </div>
+              <h2 id="detail-title">Judul Video</h2>
+              <p id="detail-source-value" class="muted-text"></p>
+            </div>
+            <div class="header-actions">
+              <button type="button" id="reanalyze-btn" class="btn btn-secondary">
+                Analisis Ulang Momen
+              </button>
+              <button type="button" id="render-all-btn" class="btn btn-primary">
+                Render Semua Klip
+              </button>
+              <a id="download-zip-btn" class="btn btn-success hidden" href="#">
+                Download Semua (.zip)
+              </a>
+              <button type="button" id="delete-raw-btn" class="btn btn-danger">
+                Hapus File Mentah (Hemat SSD)
+              </button>
+            </div>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-bar">
+              <div id="detail-progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <span id="detail-progress-text" class="progress-text">0%</span>
+          </div>
+
+          <div id="detail-error" class="error-banner hidden"></div>
+          <div id="raw-missing-notice" class="info-banner hidden">
+            File video mentah (raw.mp4) sudah dihapus untuk menghemat SSD. Klip yang sudah jadi tetap bisa diputar &amp; diunduh, tetapi render ulang dinonaktifkan.
+          </div>
+        </header>
+
+        <section id="split-editor-card" class="panel-card">
+          <div class="section-head">
+            <div>
+              <h3>Pengaturan Split-Screen Visual (Facecam + Gameplay)</h3>
+              <p class="muted-text">Atur area kotak kuning (Facecam atas 1080×640) & kotak hijau (Gameplay bawah 1080×1280).</p>
+            </div>
+            <button type="button" id="toggle-split-btn" class="btn btn-secondary">Sembunyikan</button>
+          </div>
+
+          <div id="split-editor-body" class="split-editor-grid">
+            <div class="frame-stage-wrap">
+              <div id="frame-stage" class="frame-stage">
+                <img id="preview-frame-img" alt="Preview Frame" />
+                <div id="overlay-cam" class="box-overlay box-cam"><span>FACECAM</span></div>
+                <div id="overlay-game" class="box-overlay box-game"><span>GAMEPLAY</span></div>
+              </div>
+              <div id="no-frame-msg" class="empty-muted hidden">Preview frame belum tersedia.</div>
+            </div>
+
+            <div class="split-controls">
+              <div class="streamer-preset-bar">
+                <div class="preset-select-row">
+                  <select id="preset-select">
+                    <option value="">-- Pilih Preset Streamer --</option>
+                  </select>
+                  <button type="button" id="apply-preset-btn" class="btn btn-small btn-secondary">Terapkan</button>
+                  <button type="button" id="delete-preset-btn" class="btn btn-small btn-danger">Hapus</button>
+                </div>
+                <div class="preset-save-row">
+                  <input type="text" id="preset-name-input" placeholder="Nama streamer (mis. Windah)" />
+                  <button type="button" id="save-preset-btn" class="btn btn-small btn-secondary">+ Simpan Preset</button>
+                </div>
+              </div>
+
+              <div class="preset-row">
+                <button type="button" class="btn btn-small btn-secondary preset-btn" data-preset="top-left">Cam Kiri Atas</button>
+                <button type="button" class="btn btn-small btn-secondary preset-btn" data-preset="top-right">Cam Kanan Atas</button>
+                <button type="button" class="btn btn-small btn-secondary preset-btn" data-preset="bottom-left">Cam Kiri Bawah</button>
+              </div>
+
+              <div class="coord-group">
+                <h4 class="cam-label">Kotak Facecam (Kuning)</h4>
+                <div class="coord-inputs">
+                  <label>X <input type="number" id="cam_x" min="0" step="10" /></label>
+                  <label>Y <input type="number" id="cam_y" min="0" step="10" /></label>
+                  <label>W <input type="number" id="cam_w" min="16" step="10" /></label>
+                  <label>H <input type="number" id="cam_h" min="16" step="10" /></label>
+                </div>
+              </div>
+
+              <div class="coord-group">
+                <h4 class="game-label">Kotak Gameplay (Hijau)</h4>
+                <div class="coord-inputs">
+                  <label>X <input type="number" id="game_x" min="0" step="10" /></label>
+                  <label>Y <input type="number" id="game_y" min="0" step="10" /></label>
+                  <label>W <input type="number" id="game_w" min="16" step="10" /></label>
+                  <label>H <input type="number" id="game_h" min="16" step="10" /></label>
+                </div>
+              </div>
+
+              <button type="button" id="save-split-btn" class="btn btn-primary full-width">
+                Simpan Koordinat Split-Screen
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="clips-section">
+          <div class="section-head">
+            <h3>Kandidat Klip</h3>
+            <span id="clips-count-label" class="muted-text">0 klip</span>
+          </div>
+          <div id="clips-container" class="clips-grid"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

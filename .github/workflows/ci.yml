@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install FFmpeg and DejaVu fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fastapi uvicorn python-multipart faster-whisper yt-dlp numpy pytest httpx
+
+      - name: Run unit and API integration tests
+        env:
+          CLIPPER_DEVICE: cpu
+          CLIPPER_VIDEO_ENCODER: libx264
+        run: pytest -v tests -k "not e2e_gpu"

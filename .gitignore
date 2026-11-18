@@ -1,0 +1,14 @@
+storage/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.env
+*.mp4
+*.mkv
+*.mov
+*.webm
+*.wav
+*.db
+*.db-wal
+*.db-shm
